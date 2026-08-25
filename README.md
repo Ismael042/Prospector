@@ -9,9 +9,9 @@ de construção de um produto real, do zero.
 
 ## Roadmap
 
-- [ ] **Fase 0 — Setup**: repositório, credenciais, estrutura do projeto
-- [ ] **Fase 1 — Descoberta & Filtro**: buscar negócios por categoria/região e
-      identificar quem não tem site real *(em andamento)*
+- [x] **Fase 0 — Setup**: repositório, credenciais, estrutura do projeto
+- [x] **Fase 1 — Descoberta & Filtro**: buscar negócios por categoria/região e
+      identificar quem não tem site real
 - [ ] **Fase 2 — Geração de Isca (IA)**: copy personalizada + mockup de landing page
       gerados por LLM para cada lead
 - [ ] **Fase 3 — Outreach & Agendamento**: envio automatizado de e-mail com link de
