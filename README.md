@@ -12,7 +12,7 @@ de construção de um produto real, do zero.
 - [x] **Fase 0 — Setup**: repositório, credenciais, estrutura do projeto
 - [x] **Fase 1 — Descoberta & Filtro**: buscar negócios por categoria/região e
       identificar quem não tem site real
-- [ ] **Fase 2 — Geração de Isca (IA)**: copy personalizada + mockup de landing page
+- [x] **Fase 2 — Geração de Isca (IA)**: copy personalizada + mockup de landing page
       gerados por LLM para cada lead
 - [ ] **Fase 3 — Outreach & Agendamento**: envio automatizado de e-mail com link de
       agendamento e follow-up
@@ -49,9 +49,34 @@ python -m prospector.search --category "plumber" --location "Austin, TX" --max-r
 Gera um CSV em `data/` com os negócios encontrados e a coluna `has_real_site`
 indicando quem é um lead qualificado (sem site próprio).
 
+## Fase 2 — Geração de Isca (IA)
+
+Para cada lead sem site de um CSV do Módulo 1, gera com a **Claude API**
+(`claude-opus-5`) uma copy de e-mail personalizada e um mockup completo de landing
+page em HTML — auto-contido, sem dependências externas.
+
+### Setup adicional
+
+1. Crie uma API key em [console.anthropic.com](https://console.anthropic.com/)
+2. Adicione em `.env`:
+   ```
+   ANTHROPIC_API_KEY=sua_chave_aqui
+   ```
+
+### Uso
+
+```bash
+python -m prospector.generate --input data/results_bakery_halifax-ns_...csv --category "bakery" --limit 5
+```
+
+Salva `email.txt` (assunto + corpo) e `landing.html` em
+`data/leads/<nome-do-negocio>/`, e imprime o custo aproximado da chamada à API no
+final. Custo real medido: ~$0.13 por lead com `claude-opus-5`.
+
 ## Stack
 
-Python · Google Places API · (próximas fases: LLM APIs, Next.js, Supabase)
+Python · Google Places API · Claude API (Anthropic) · (próximas fases: Next.js,
+Supabase)
 
 ## Licença
 

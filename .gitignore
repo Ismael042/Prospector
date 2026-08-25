@@ -1,6 +1,6 @@
 .env
-data/*.csv
-data/*.json
+data/*
+!data/.gitkeep
 __pycache__/
 *.pyc
 .venv/
