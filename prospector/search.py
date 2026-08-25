@@ -18,6 +18,7 @@ CSV_FIELDS = [
     "website",
     "has_real_site",
     "maps_url",
+    "photo_name",
 ]
 
 

@@ -10,8 +10,9 @@ SEARCH_URL = "https://places.googleapis.com/v1/places:searchText"
 FIELD_MASK = (
     "places.id,places.displayName,places.formattedAddress,places.websiteUri,"
     "places.nationalPhoneNumber,places.rating,places.userRatingCount,"
-    "places.googleMapsUri,nextPageToken"
+    "places.googleMapsUri,places.photos,nextPageToken"
 )
+PHOTO_MEDIA_URL = "https://places.googleapis.com/v1/{photo_name}/media"
 PAGE_SIZE = 20
 # Google recomenda um pequeno intervalo antes de reusar um pageToken recem-emitido.
 PAGE_TOKEN_DELAY_SECONDS = 2
@@ -41,6 +42,7 @@ def _request(body: dict) -> dict:
 
 
 def _normalize(place: dict) -> dict:
+    photos = place.get("photos") or []
     return {
         "place_id": place.get("id"),
         "name": place.get("displayName", {}).get("text"),
@@ -50,6 +52,7 @@ def _normalize(place: dict) -> dict:
         "review_count": place.get("userRatingCount"),
         "website": place.get("websiteUri"),
         "maps_url": place.get("googleMapsUri"),
+        "photo_name": photos[0].get("name") if photos else None,
     }
 
 
@@ -71,3 +74,19 @@ def search_places(query: str, max_results: int = 60) -> list[dict]:
         time.sleep(PAGE_TOKEN_DELAY_SECONDS)
 
     return results[:max_results]
+
+
+def fetch_photo(photo_name: str | None, max_width_px: int = 1200) -> tuple[bytes, str] | None:
+    if not photo_name:
+        return None
+
+    response = requests.get(
+        PHOTO_MEDIA_URL.format(photo_name=photo_name),
+        params={"maxWidthPx": max_width_px, "key": _api_key()},
+        timeout=15,
+    )
+    if response.status_code != 200:
+        return None
+
+    content_type = response.headers.get("Content-Type", "image/jpeg")
+    return response.content, content_type

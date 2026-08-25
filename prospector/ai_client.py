@@ -6,39 +6,46 @@ load_dotenv()
 
 MODEL = "claude-opus-5"
 
-PROMPT_TEMPLATE = """You are writing outreach material to help a freelance web
-developer land a new client. The lead below is a real local business found on
-Google Maps that has no real website of its own.
+PROMPT_TEMPLATE = """You are a copywriter helping a freelance web developer pitch
+a custom website to a real local business. The business below has no website of
+its own — only a Google Maps listing.
 
 Business: {name}
 Category: {category}
 Address: {address}
 Google rating: {rating} ({review_count} reviews)
 
-Write two things:
+Write, in English:
 
-1. A short, professional cold email (in English) pitching a custom website for
-   this business. Reference at least one real detail above (e.g. the rating or
-   review count) as a hook — do not write generic filler. Keep it under 150
-   words. No markdown, plain text body.
+1. A short, professional cold email pitching a custom website. Reference at
+   least one real detail above (rating or review count) as a hook — no generic
+   filler. Under 150 words, plain text body.
 
-2. A complete, self-contained HTML mockup of a one-page landing site for this
-   business, as if it already existed. Inline all CSS in a <style> tag, no
-   external stylesheets, fonts, images, or scripts. Include: a hero section
-   with the business name and category, a short services/about section
-   appropriate for this type of business, and a contact section using the
-   real address and, if useful, mentioning the Google rating as social proof.
-   Modern, clean, mobile-friendly design.
+2. Copy for a one-page website mockup of this business, as if it already
+   existed:
+   - headline: a short, specific headline (not a generic tagline)
+   - subheadline: one supporting sentence
+   - about_paragraph: 2-3 sentences about the business, in a warm but
+     professional tone appropriate to its category
+   - highlights: exactly 3 short phrases (3-6 words each) naming concrete
+     services or features specific to this type of business — not generic
+     ("Quality service") filler
+   - cta_label: 2-4 words for a call-to-action button, appropriate to the
+     category (e.g. "Book a Table", "Get a Free Quote")
 """
 
 
-class LeadPitch(BaseModel):
+class LeadCopy(BaseModel):
     email_subject: str
     email_body: str
-    landing_page_html: str
+    headline: str
+    subheadline: str
+    about_paragraph: str
+    highlights: list[str]
+    cta_label: str
 
 
-def generate_pitch(lead: dict, category: str) -> tuple[LeadPitch, dict]:
+def generate_pitch(lead: dict, category: str) -> tuple[LeadCopy, dict]:
     prompt = PROMPT_TEMPLATE.format(
         name=lead["name"],
         category=category,
@@ -51,7 +58,7 @@ def generate_pitch(lead: dict, category: str) -> tuple[LeadPitch, dict]:
         model=MODEL,
         max_tokens=16000,
         messages=[{"role": "user", "content": prompt}],
-        output_format=LeadPitch,
+        output_format=LeadCopy,
     )
     usage = {
         "input_tokens": response.usage.input_tokens,

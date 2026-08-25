@@ -4,7 +4,9 @@ import sys
 from pathlib import Path
 
 from prospector.ai_client import generate_pitch
+from prospector.places_client import fetch_photo
 from prospector.search import _slugify
+from prospector.template import render_landing_page
 
 DATA_DIR = Path(__file__).resolve().parent.parent / "data"
 LEADS_DIR = DATA_DIR / "leads"
@@ -37,19 +39,25 @@ def run(input_csv: str, category: str, limit: int) -> None:
     for lead in leads:
         print(f"Gerando pitch para: {lead['name']}...")
         try:
-            pitch, usage = generate_pitch(lead, category)
+            copy, usage = generate_pitch(lead, category)
         except Exception as exc:
-            print(f"  FALHOU: {exc}")
+            print(f"  FALHOU (copy): {exc}")
             failed += 1
             continue
+
+        photo = fetch_photo(lead.get("photo_name"))
+        photo_bytes, photo_content_type = photo if photo else (None, None)
+        print(f"  foto: {'encontrada' if photo_bytes else 'sem foto disponível'}")
+
+        html_doc = render_landing_page(lead, copy, photo_bytes, photo_content_type, category)
 
         lead_dir = LEADS_DIR / _slugify(lead["name"])
         lead_dir.mkdir(parents=True, exist_ok=True)
 
         (lead_dir / "email.txt").write_text(
-            f"Subject: {pitch.email_subject}\n\n{pitch.email_body}\n", encoding="utf-8"
+            f"Subject: {copy.email_subject}\n\n{copy.email_body}\n", encoding="utf-8"
         )
-        (lead_dir / "landing.html").write_text(pitch.landing_page_html, encoding="utf-8")
+        (lead_dir / "landing.html").write_text(html_doc, encoding="utf-8")
 
         total_cost += (
             usage["input_tokens"] * INPUT_PRICE_PER_TOKEN
