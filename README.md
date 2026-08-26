@@ -16,7 +16,8 @@ de construção de um produto real, do zero.
       gerados por LLM para cada lead
 - [x] **Fase 3 — Outreach**: roteiro de ligação personalizado por lead (a Places
       API não retorna e-mail do negócio, então o canal virou telefone)
-- [ ] **Fase 4 — CRM / Dashboard**: funil de vendas em Next.js + Supabase
+- [x] **Fase 4 — CRM / Dashboard**: funil de vendas em Next.js + Supabase, com
+      autenticação e métricas de conversão
 - [ ] **Fase 5 — Deploy & Operação**: agendamento, hospedagem e monitoramento
 
 ## Módulo 1 — Descoberta & Filtro
@@ -84,18 +85,19 @@ Fase 2 continua sendo gerado como rascunho opcional (com rodapé de compliance:
 razão social, CNPJ e endereço do MEI), caso o lead prefira e-mail depois do
 primeiro contato.
 
-## Fase 4 — CRM / Dashboard *(em andamento)*
+## Fase 4 — CRM / Dashboard
 
 Funil de vendas (encontrado → contatado → respondeu → reunião → fechado/perdido)
 persistido em **Supabase local** (via Docker, `supabase start`) e visualizado num
-dashboard **Next.js + Tailwind** em `dashboard/`.
+dashboard **Next.js + Tailwind** em `dashboard/`, protegido por login
+(Supabase Auth) e com uma tela de métricas de conversão por categoria/região.
 
 ### Setup adicional
 
 1. Instale o [Supabase CLI](https://supabase.com/docs/guides/cli) e o Docker Desktop
 2. Na raiz do repo: `supabase start` (sobe o stack local; a primeira vez baixa as
    imagens Docker)
-3. Copie a `service_role key` impressa pelo comando pro `.env`:
+3. Copie a `secret key` impressa pelo comando pro `.env`:
    ```
    SUPABASE_URL=http://127.0.0.1:55321
    SUPABASE_SECRET_KEY=sua_chave_aqui
@@ -111,9 +113,17 @@ dashboard **Next.js + Tailwind** em `dashboard/`.
    npm install
    npm run dev
    ```
+6. Acesse `http://localhost:3000` — primeira vez, clique em "Primeira vez? Criar
+   conta" pra criar seu login (Supabase Auth local, sem confirmação de e-mail
+   necessária se `enable_confirmations` estiver desligado, senão confira o
+   Mailpit em `http://127.0.0.1:55324`)
 
-Ainda faltam autenticação (Supabase Auth) e a tela de métricas de conversão —
-cada um é um módulo próprio, ainda por vir.
+A tabela `leads` tem RLS habilitado — só usuários autenticados leem/atualizam
+pelo dashboard; o `sync_supabase.py` insere via `service_role`, que ignora RLS.
+
+> Nota: o Supabase Studio local (`http://127.0.0.1:55323`) está desabilitado
+> nesta máquina por um bug de mount do Docker Desktop no Windows — ver item no
+> Backlog do Trello. Os dados são inspecionáveis via REST API ou psql direto.
 
 ## Stack
 
