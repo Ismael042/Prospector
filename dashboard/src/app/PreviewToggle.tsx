@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { publishPreview, unpublishPreview } from "./actions";
 
@@ -16,6 +17,7 @@ export function PreviewToggle({
   previewUrl: string | null;
   hasContent: boolean;
 }) {
+  const router = useRouter();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -28,6 +30,7 @@ export function PreviewToggle({
       } else {
         await publishPreview(leadId, leadName);
       }
+      router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Falhou");
     } finally {
