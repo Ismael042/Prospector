@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import type { Lead } from "@/lib/types";
 import { STAGE_DOT, STAGE_LABELS, STAGE_ORDER, categoryLabel } from "@/lib/stages";
@@ -33,6 +34,14 @@ export default async function Home() {
           <p className="mt-1 text-sm text-neutral-500">
             {leads.length} lead{leads.length === 1 ? "" : "s"} no funil
           </p>
+          <nav className="mt-2 flex gap-4 text-sm">
+            <Link href="/" className="font-medium text-indigo-600">
+              Leads
+            </Link>
+            <Link href="/metrics" className="text-neutral-500 hover:text-neutral-800">
+              Métricas
+            </Link>
+          </nav>
         </div>
         <LogoutButton />
       </header>
