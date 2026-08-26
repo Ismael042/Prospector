@@ -1,11 +1,138 @@
+<p align="center">
+  <img src="docs/dashboard.png" alt="Dashboard do Prospector" width="800">
+</p>
+
 # Prospector
 
-Automação de prospecção de leads: busca negócios locais (EUA/Canadá) via **Google
-Places API**, identifica quem não tem site próprio e organiza os dados pra virar
-oportunidade de venda de serviços de desenvolvimento web.
+Prospector é uma automação de geração de leads: encontra negócios locais nos EUA
+e Canadá que não têm site próprio, gera uma proposta personalizada (copy de
+e-mail, mockup de landing page e roteiro de ligação) com IA, publica o mockup
+numa URL de verdade e acompanha tudo num CRM até fechar negócio — rodando
+sozinho, todo dia, sem intervenção manual.
 
-Projeto em desenvolvimento por fases — este repositório acompanha o roadmap público
-de construção de um produto real, do zero.
+Construído em público, fase por fase, do zero até produção.
+
+## Ao vivo
+
+- **Dashboard**: [prospector.santanaismael042.workers.dev](https://prospector.santanaismael042.workers.dev)
+  (crie uma conta pra entrar — é um CRM de uso pessoal, sem dados de terceiros)
+- **Exemplo de mockup gerado**: [preview.isdev.online/wellington-bakery](https://preview.isdev.online/wellington-bakery)
+
+| Dashboard | Métricas |
+|---|---|
+| ![Dashboard](docs/dashboard.png) | ![Métricas](docs/metrics.png) |
+
+**Mockup de landing page gerado por IA**, com foto real do negócio (Google Places),
+tipografia e paleta autorais (não gerada por IA — só o texto é):
+
+![Mockup gerado](docs/mockup-example.png)
+
+## Como funciona
+
+```mermaid
+flowchart LR
+    A["Google Places API<br/>busca por categoria + região"] --> B{"Tem site<br/>próprio?"}
+    B -->|não| C["Supabase<br/>entra no funil"]
+    B -->|sim| X["descarta"]
+    C --> D["Claude API<br/>copy + mockup + roteiro de ligação"]
+    D --> E["R2<br/>preview.isdev.online/‑slug‑"]
+    D --> F["ligação telefônica"]
+    C --> G["Dashboard Next.js<br/>acompanha o funil"]
+
+    H["Task Scheduler<br/>todo dia às 8h"] -.dispara.-> A
+```
+
+Tudo isso roda sozinho via **Task Scheduler** todo dia: busca negócios novos,
+sincroniza com o CRM e gera a proposta — de forma **idempotente** (nunca gera
+duas vezes o mesmo lead) e com log rotativo. Publicar o mockup continua sendo
+uma decisão manual, pra revisar a copy da IA antes dela ficar pública sob o
+domínio próprio.
+
+## Stack
+
+**Automação/backend:** Python · Google Places API · Claude API (Anthropic,
+`claude-opus-5`) · Supabase (Postgres + Auth) · boto3 (Cloudflare R2)
+
+**Dashboard:** Next.js (App Router) · TypeScript · Tailwind CSS · Supabase
+Auth/RLS
+
+**Infra:** Cloudflare Workers (via [vinext](https://developers.cloudflare.com/workers/framework-guides/web-apps/nextjs/))
+· Cloudflare R2 · Supabase Cloud · Windows Task Scheduler
+
+## Setup
+
+### 1. Credenciais (`.env` na raiz)
+
+```bash
+cp .env.example .env
+```
+
+| Variável | Onde conseguir |
+|---|---|
+| `GOOGLE_PLACES_API_KEY` | [Google Cloud Console](https://console.cloud.google.com/) → ativar **Places API (New)** |
+| `ANTHROPIC_API_KEY` | [console.anthropic.com](https://console.anthropic.com/) |
+| `SUPABASE_URL` / `SUPABASE_SECRET_KEY` | Projeto no [Supabase](https://supabase.com/dashboard) (ou `supabase start` local, via Docker) |
+| `R2_ACCOUNT_ID` / `R2_ACCESS_KEY_ID` / `R2_SECRET_ACCESS_KEY` / `R2_BUCKET_NAME` | Cloudflare → R2 → bucket + API Token |
+| `PREVIEW_BASE_URL` | Domínio customizado apontado pro bucket R2 |
+
+```bash
+pip install -r requirements.txt
+```
+
+### 2. Schema do banco
+
+Rode o SQL de `supabase/migrations/` no seu projeto Supabase (via `supabase db
+push` se estiver linkado, ou colando no SQL Editor).
+
+### 3. Dashboard
+
+```bash
+cd dashboard
+cp .env.local.example .env.local   # URL + chave publishable do Supabase
+npm install
+npm run dev
+```
+
+## Uso
+
+```bash
+# 1. Busca negócios sem site
+python -m prospector.search --category "bakery" --location "Halifax, NS" --max-results 60
+
+# 2. Sincroniza com o CRM (Supabase)
+python -m prospector.sync_supabase --input data/results_....csv --category "bakery" --location "Halifax, NS"
+
+# 3. Gera copy de e-mail + mockup + roteiro de ligação (Claude API)
+python -m prospector.generate --input data/results_....csv --category "bakery" --limit 5
+
+# 4. Publica o mockup em preview.isdev.online/<slug>
+python -m prospector.publish --slug wellington-bakery
+# ou --all pra publicar todo mundo já gerado
+
+# Roda os passos 1-3 pra toda a watchlist (prospector/watchlist.py), pulando
+# quem já foi processado - é isso que o Task Scheduler dispara todo dia
+python -m prospector.scheduled_run
+```
+
+## Estrutura
+
+```
+prospector/
+  places_client.py    # Google Places API (busca + fotos)
+  filters.py           # heurística de "sem site real"
+  search.py             # CLI: busca -> CSV
+  ai_client.py           # Claude API: copy estruturada por lead
+  template.py             # template HTML/CSS autoral do mockup
+  generate.py               # CLI: copy + mockup + roteiro de ligação
+  sync_supabase.py           # CSV -> CRM (idempotente)
+  publish.py                  # mockup -> R2 (preview.isdev.online)
+  watchlist.py                 # categorias/regiões monitoradas
+  scheduled_run.py               # pipeline completo, log rotativo
+supabase/
+  migrations/                     # schema + RLS
+dashboard/
+  src/app/                         # Next.js: leads, métricas, login
+```
 
 ## Roadmap
 
@@ -18,117 +145,9 @@ de construção de um produto real, do zero.
       API não retorna e-mail do negócio, então o canal virou telefone)
 - [x] **Fase 4 — CRM / Dashboard**: funil de vendas em Next.js + Supabase, com
       autenticação e métricas de conversão
-- [ ] **Fase 5 — Deploy & Operação**: agendamento, hospedagem e monitoramento
-
-## Módulo 1 — Descoberta & Filtro
-
-Busca negócios por categoria + região usando a **Places API (New)** do Google e
-filtra quem não tem um site próprio (campo `websiteUri` ausente, ou apenas um link
-de rede social como "site").
-
-### Setup
-
-1. Crie um projeto no [Google Cloud Console](https://console.cloud.google.com/)
-2. Ative a **Places API (New)**
-3. Crie uma credencial de API key e restrinja-a à Places API (New)
-   — billing precisa estar habilitado na conta, mas há cota gratuita mensal
-4. Copie `.env.example` para `.env` e cole sua chave:
-   ```
-   GOOGLE_PLACES_API_KEY=sua_chave_aqui
-   ```
-5. Instale as dependências:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-### Uso
-
-```bash
-python -m prospector.search --category "plumber" --location "Austin, TX" --max-results 60
-```
-
-Gera um CSV em `data/` com os negócios encontrados e a coluna `has_real_site`
-indicando quem é um lead qualificado (sem site próprio).
-
-## Fase 2 — Geração de Isca (IA)
-
-Para cada lead sem site de um CSV do Módulo 1, gera com a **Claude API**
-(`claude-opus-5`) uma copy de e-mail personalizada e um mockup completo de landing
-page em HTML — auto-contido, sem dependências externas.
-
-### Setup adicional
-
-1. Crie uma API key em [console.anthropic.com](https://console.anthropic.com/)
-2. Adicione em `.env`:
-   ```
-   ANTHROPIC_API_KEY=sua_chave_aqui
-   ```
-
-### Uso
-
-```bash
-python -m prospector.generate --input data/results_bakery_halifax-ns_...csv --category "bakery" --limit 5
-```
-
-Salva `email.txt`, `landing.html` e `call_script.txt` em
-`data/leads/<nome-do-negocio>/`, e imprime o custo aproximado da chamada à API no
-final. Custo real medido: ~$0.02-0.05 por lead com `claude-opus-5`.
-
-## Fase 3 — Outreach
-
-A Google Places API não expõe e-mail do negócio — só telefone, endereço e site.
-Em vez de e-mail em massa (que também traria risco de compliance real, CAN-SPAM
-nos EUA e CASL no Canadá), o canal de contato é telefone: `call_script.txt` traz
-abertura, pontos-chave e fechamento personalizados pra uma ligação de verdade,
-feita por uma pessoa — não há envio automatizado nesta fase. O `email.txt` da
-Fase 2 continua sendo gerado como rascunho opcional (com rodapé de compliance:
-razão social, CNPJ e endereço do MEI), caso o lead prefira e-mail depois do
-primeiro contato.
-
-## Fase 4 — CRM / Dashboard
-
-Funil de vendas (encontrado → contatado → respondeu → reunião → fechado/perdido)
-persistido em **Supabase local** (via Docker, `supabase start`) e visualizado num
-dashboard **Next.js + Tailwind** em `dashboard/`, protegido por login
-(Supabase Auth) e com uma tela de métricas de conversão por categoria/região.
-
-### Setup adicional
-
-1. Instale o [Supabase CLI](https://supabase.com/docs/guides/cli) e o Docker Desktop
-2. Na raiz do repo: `supabase start` (sobe o stack local; a primeira vez baixa as
-   imagens Docker)
-3. Copie a `secret key` impressa pelo comando pro `.env`:
-   ```
-   SUPABASE_URL=http://127.0.0.1:55321
-   SUPABASE_SECRET_KEY=sua_chave_aqui
-   ```
-4. Sincronize os leads sem site de um CSV do Módulo 1:
-   ```bash
-   python -m prospector.sync_supabase --input data/results_bakery_halifax-ns_...csv --category "bakery" --location "Halifax, NS"
-   ```
-5. Rode o dashboard:
-   ```bash
-   cd dashboard
-   cp .env.local.example .env.local  # preencha com a URL e a chave publishable do Supabase
-   npm install
-   npm run dev
-   ```
-6. Acesse `http://localhost:3000` — primeira vez, clique em "Primeira vez? Criar
-   conta" pra criar seu login (Supabase Auth local, sem confirmação de e-mail
-   necessária se `enable_confirmations` estiver desligado, senão confira o
-   Mailpit em `http://127.0.0.1:55324`)
-
-A tabela `leads` tem RLS habilitado — só usuários autenticados leem/atualizam
-pelo dashboard; o `sync_supabase.py` insere via `service_role`, que ignora RLS.
-
-> Nota: o Supabase Studio local (`http://127.0.0.1:55323`) está desabilitado
-> nesta máquina por um bug de mount do Docker Desktop no Windows — ver item no
-> Backlog do Trello. Os dados são inspecionáveis via REST API ou psql direto.
-
-## Stack
-
-Python · Google Places API · Claude API (Anthropic) · Next.js · Tailwind CSS ·
-Supabase (Postgres, self-hosted via Docker)
+- [x] **Fase 5 — Deploy & Operação**: Supabase Cloud, dashboard em produção no
+      Cloudflare Workers, mockups publicados via R2, agendamento diário com log
+      rotativo
 
 ## Licença
 
