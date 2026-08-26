@@ -10,6 +10,12 @@ export type Lead = {
   review_count: number | null;
   maps_url: string | null;
   stage: "found" | "contacted" | "replied" | "meeting" | "closed" | "lost";
+  landing_html: string | null;
+  email_subject: string | null;
+  email_body: string | null;
+  call_script: string | null;
+  preview_published: boolean;
+  preview_url: string | null;
   created_at: string;
   updated_at: string;
 };

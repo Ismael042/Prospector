@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import type { Lead } from "@/lib/types";
 import { STAGE_DOT, STAGE_LABELS, STAGE_ORDER, categoryLabel } from "@/lib/stages";
 import { LogoutButton } from "./LogoutButton";
+import { PreviewToggle } from "./PreviewToggle";
 import { StageSelect } from "./StageSelect";
 
 export const dynamic = "force-dynamic";
@@ -69,6 +70,7 @@ export default async function Home() {
                       <th className="px-4 py-2.5 font-medium">Região</th>
                       <th className="px-4 py-2.5 font-medium">Avaliação</th>
                       <th className="px-4 py-2.5 font-medium">Telefone</th>
+                      <th className="px-4 py-2.5 font-medium">Preview</th>
                       <th className="px-4 py-2.5 font-medium">Estágio</th>
                     </tr>
                   </thead>
@@ -101,6 +103,15 @@ export default async function Home() {
                         </td>
                         <td className="px-4 py-3 text-neutral-600 tabular-nums">
                           {lead.phone ?? "—"}
+                        </td>
+                        <td className="px-4 py-3">
+                          <PreviewToggle
+                            leadId={lead.id}
+                            leadName={lead.name}
+                            published={lead.preview_published}
+                            previewUrl={lead.preview_url}
+                            hasContent={!!lead.landing_html}
+                          />
                         </td>
                         <td className="px-4 py-3">
                           <StageSelect leadId={lead.id} stage={lead.stage} />
