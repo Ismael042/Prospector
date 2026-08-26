@@ -29,10 +29,17 @@ def _load_leads_without_site(csv_path: Path) -> list[dict]:
     return [row for row in rows if row["has_real_site"] == "False"]
 
 
-def run(input_csv: str, category: str, limit: int) -> None:
+def run(input_csv: str, category: str, limit: int, skip_existing: bool = False) -> None:
     sys.stdout.reconfigure(line_buffering=True)
 
-    leads = _load_leads_without_site(Path(input_csv))[:limit]
+    leads = _load_leads_without_site(Path(input_csv))
+    if skip_existing:
+        leads = [
+            lead
+            for lead in leads
+            if not (LEADS_DIR / _slugify(lead["name"]) / "landing.html").exists()
+        ]
+    leads = leads[:limit]
     if not leads:
         print("Nenhum lead sem site encontrado nesse CSV.")
         return
@@ -93,9 +100,14 @@ def main() -> None:
     parser.add_argument("--input", required=True, help="CSV gerado pelo prospector.search")
     parser.add_argument("--category", required=True, help='Categoria do negócio, ex: "bakery"')
     parser.add_argument("--limit", type=int, default=5)
+    parser.add_argument(
+        "--skip-existing",
+        action="store_true",
+        help="Pula leads que já têm data/leads/<slug>/landing.html gerado",
+    )
     args = parser.parse_args()
 
-    run(args.input, args.category, args.limit)
+    run(args.input, args.category, args.limit, skip_existing=args.skip_existing)
 
 
 if __name__ == "__main__":

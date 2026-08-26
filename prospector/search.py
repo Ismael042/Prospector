@@ -1,6 +1,7 @@
 import argparse
 import csv
 import re
+import unicodedata
 from datetime import datetime
 from pathlib import Path
 
@@ -23,7 +24,8 @@ CSV_FIELDS = [
 
 
 def _slugify(text: str) -> str:
-    return re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-")
+    ascii_text = unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode("ascii")
+    return re.sub(r"[^a-z0-9]+", "-", ascii_text.lower()).strip("-")
 
 
 def run(category: str, location: str, max_results: int) -> Path:
