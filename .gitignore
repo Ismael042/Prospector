@@ -1,4 +1,5 @@
-.env
+.env*
+!.env*.example
 data/*
 !data/.gitkeep
 __pycache__/
