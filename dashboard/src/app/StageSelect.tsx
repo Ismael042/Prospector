@@ -2,7 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { createSupabaseClient, type Lead } from "@/lib/supabase";
+import { createClient } from "@/lib/supabase/client";
+import type { Lead } from "@/lib/types";
 import { STAGE_LABELS, STAGE_ORDER } from "@/lib/stages";
 
 export function StageSelect({ leadId, stage }: { leadId: string; stage: Lead["stage"] }) {
@@ -12,7 +13,7 @@ export function StageSelect({ leadId, stage }: { leadId: string; stage: Lead["st
   async function handleChange(e: React.ChangeEvent<HTMLSelectElement>) {
     const next = e.target.value as Lead["stage"];
     setPending(true);
-    const supabase = createSupabaseClient();
+    const supabase = createClient();
     await supabase.from("leads").update({ stage: next }).eq("id", leadId);
     setPending(false);
     router.refresh();

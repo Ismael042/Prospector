@@ -1,4 +1,4 @@
-import type { Lead } from "./supabase";
+import type { Lead } from "./types";
 
 export const STAGE_ORDER: Lead["stage"][] = [
   "found",

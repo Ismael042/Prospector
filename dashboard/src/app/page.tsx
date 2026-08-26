@@ -1,11 +1,13 @@
-import { createSupabaseClient, type Lead } from "@/lib/supabase";
+import { createClient } from "@/lib/supabase/server";
+import type { Lead } from "@/lib/types";
 import { STAGE_DOT, STAGE_LABELS, STAGE_ORDER, categoryLabel } from "@/lib/stages";
+import { LogoutButton } from "./LogoutButton";
 import { StageSelect } from "./StageSelect";
 
 export const dynamic = "force-dynamic";
 
 async function getLeads(): Promise<Lead[]> {
-  const supabase = createSupabaseClient();
+  const supabase = await createClient();
   const { data, error } = await supabase
     .from("leads")
     .select("*")
@@ -20,16 +22,19 @@ export default async function Home() {
 
   return (
     <div className="min-h-screen bg-neutral-50">
-      <header className="border-b border-neutral-200 bg-white px-8 py-6">
-        <div className="flex items-center gap-2.5">
-          <span className="h-2.5 w-2.5 rounded-sm bg-indigo-600" />
-          <h1 className="text-xl font-semibold tracking-tight text-neutral-900">
-            Prospector
-          </h1>
+      <header className="flex items-start justify-between border-b border-neutral-200 bg-white px-8 py-6">
+        <div>
+          <div className="flex items-center gap-2.5">
+            <span className="h-2.5 w-2.5 rounded-sm bg-indigo-600" />
+            <h1 className="text-xl font-semibold tracking-tight text-neutral-900">
+              Prospector
+            </h1>
+          </div>
+          <p className="mt-1 text-sm text-neutral-500">
+            {leads.length} lead{leads.length === 1 ? "" : "s"} no funil
+          </p>
         </div>
-        <p className="mt-1 text-sm text-neutral-500">
-          {leads.length} lead{leads.length === 1 ? "" : "s"} no funil
-        </p>
+        <LogoutButton />
       </header>
 
       <main className="px-8 py-8">
