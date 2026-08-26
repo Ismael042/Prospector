@@ -84,10 +84,41 @@ Fase 2 continua sendo gerado como rascunho opcional (com rodapé de compliance:
 razão social, CNPJ e endereço do MEI), caso o lead prefira e-mail depois do
 primeiro contato.
 
+## Fase 4 — CRM / Dashboard *(em andamento)*
+
+Funil de vendas (encontrado → contatado → respondeu → reunião → fechado/perdido)
+persistido em **Supabase local** (via Docker, `supabase start`) e visualizado num
+dashboard **Next.js + Tailwind** em `dashboard/`.
+
+### Setup adicional
+
+1. Instale o [Supabase CLI](https://supabase.com/docs/guides/cli) e o Docker Desktop
+2. Na raiz do repo: `supabase start` (sobe o stack local; a primeira vez baixa as
+   imagens Docker)
+3. Copie a `service_role key` impressa pelo comando pro `.env`:
+   ```
+   SUPABASE_URL=http://127.0.0.1:55321
+   SUPABASE_SECRET_KEY=sua_chave_aqui
+   ```
+4. Sincronize os leads sem site de um CSV do Módulo 1:
+   ```bash
+   python -m prospector.sync_supabase --input data/results_bakery_halifax-ns_...csv --category "bakery" --location "Halifax, NS"
+   ```
+5. Rode o dashboard:
+   ```bash
+   cd dashboard
+   cp .env.local.example .env.local  # preencha com a URL e a chave publishable do Supabase
+   npm install
+   npm run dev
+   ```
+
+Ainda faltam autenticação (Supabase Auth) e a tela de métricas de conversão —
+cada um é um módulo próprio, ainda por vir.
+
 ## Stack
 
-Python · Google Places API · Claude API (Anthropic) · (próximas fases: Next.js,
-Supabase)
+Python · Google Places API · Claude API (Anthropic) · Next.js · Tailwind CSS ·
+Supabase (Postgres, self-hosted via Docker)
 
 ## Licença
 
