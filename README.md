@@ -14,8 +14,8 @@ de construção de um produto real, do zero.
       identificar quem não tem site real
 - [x] **Fase 2 — Geração de Isca (IA)**: copy personalizada + mockup de landing page
       gerados por LLM para cada lead
-- [ ] **Fase 3 — Outreach & Agendamento**: envio automatizado de e-mail com link de
-      agendamento e follow-up
+- [x] **Fase 3 — Outreach**: roteiro de ligação personalizado por lead (a Places
+      API não retorna e-mail do negócio, então o canal virou telefone)
 - [ ] **Fase 4 — CRM / Dashboard**: funil de vendas em Next.js + Supabase
 - [ ] **Fase 5 — Deploy & Operação**: agendamento, hospedagem e monitoramento
 
@@ -69,9 +69,20 @@ page em HTML — auto-contido, sem dependências externas.
 python -m prospector.generate --input data/results_bakery_halifax-ns_...csv --category "bakery" --limit 5
 ```
 
-Salva `email.txt` (assunto + corpo) e `landing.html` em
+Salva `email.txt`, `landing.html` e `call_script.txt` em
 `data/leads/<nome-do-negocio>/`, e imprime o custo aproximado da chamada à API no
-final. Custo real medido: ~$0.13 por lead com `claude-opus-5`.
+final. Custo real medido: ~$0.02-0.05 por lead com `claude-opus-5`.
+
+## Fase 3 — Outreach
+
+A Google Places API não expõe e-mail do negócio — só telefone, endereço e site.
+Em vez de e-mail em massa (que também traria risco de compliance real, CAN-SPAM
+nos EUA e CASL no Canadá), o canal de contato é telefone: `call_script.txt` traz
+abertura, pontos-chave e fechamento personalizados pra uma ligação de verdade,
+feita por uma pessoa — não há envio automatizado nesta fase. O `email.txt` da
+Fase 2 continua sendo gerado como rascunho opcional (com rodapé de compliance:
+razão social, CNPJ e endereço do MEI), caso o lead prefira e-mail depois do
+primeiro contato.
 
 ## Stack
 
