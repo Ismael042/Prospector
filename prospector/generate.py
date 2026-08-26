@@ -1,12 +1,18 @@
 import argparse
 import csv
+import os
 import sys
 from pathlib import Path
+
+from dotenv import load_dotenv
+from supabase import create_client
 
 from prospector.ai_client import generate_pitch
 from prospector.places_client import fetch_photo
 from prospector.search import _slugify
 from prospector.template import render_landing_page
+
+load_dotenv()
 
 DATA_DIR = Path(__file__).resolve().parent.parent / "data"
 LEADS_DIR = DATA_DIR / "leads"
@@ -21,6 +27,14 @@ EMAIL_COMPLIANCE_FOOTER = """
 12A Rua Wlissis Guimarães, s/n, Centro, Heliópolis - BA, 48445-000, Brasil
 Reply STOP to opt out of future emails.
 """
+
+
+def _supabase_client():
+    url = os.environ.get("SUPABASE_URL")
+    key = os.environ.get("SUPABASE_SECRET_KEY")
+    if not url or not key:
+        return None
+    return create_client(url, key)
 
 
 def _load_leads_without_site(csv_path: Path) -> list[dict]:
@@ -45,6 +59,7 @@ def run(input_csv: str, category: str, limit: int, skip_existing: bool = False) 
         return
 
     LEADS_DIR.mkdir(parents=True, exist_ok=True)
+    supabase = _supabase_client()
 
     total_cost = 0.0
     processed = 0
@@ -82,6 +97,19 @@ def run(input_csv: str, category: str, limit: int, skip_existing: bool = False) 
             f"FECHAMENTO\n{copy.call_closing_ask}\n"
         )
         (lead_dir / "call_script.txt").write_text(call_script, encoding="utf-8")
+
+        if supabase is not None:
+            try:
+                supabase.table("leads").update(
+                    {
+                        "landing_html": html_doc,
+                        "email_subject": copy.email_subject,
+                        "email_body": copy.email_body,
+                        "call_script": call_script,
+                    }
+                ).eq("place_id", lead["place_id"]).execute()
+            except Exception as exc:
+                print(f"  aviso: não consegui espelhar no Supabase: {exc}")
 
         total_cost += (
             usage["input_tokens"] * INPUT_PRICE_PER_TOKEN
