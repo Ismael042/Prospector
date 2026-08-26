@@ -3,3 +3,4 @@ python-dotenv
 anthropic
 pydantic
 supabase
+boto3
