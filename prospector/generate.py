@@ -15,6 +15,13 @@ LEADS_DIR = DATA_DIR / "leads"
 INPUT_PRICE_PER_TOKEN = 5.00 / 1_000_000
 OUTPUT_PRICE_PER_TOKEN = 25.00 / 1_000_000
 
+EMAIL_COMPLIANCE_FOOTER = """
+---
+68.440.864 ISMAEL SANTANA SILVA — CNPJ 68.440.864/0001-68
+12A Rua Wlissis Guimarães, s/n, Centro, Heliópolis - BA, 48445-000, Brasil
+Reply STOP to opt out of future emails.
+"""
+
 
 def _load_leads_without_site(csv_path: Path) -> list[dict]:
     with csv_path.open(newline="", encoding="utf-8") as f:
@@ -55,9 +62,19 @@ def run(input_csv: str, category: str, limit: int) -> None:
         lead_dir.mkdir(parents=True, exist_ok=True)
 
         (lead_dir / "email.txt").write_text(
-            f"Subject: {copy.email_subject}\n\n{copy.email_body}\n", encoding="utf-8"
+            f"Subject: {copy.email_subject}\n\n{copy.email_body}\n{EMAIL_COMPLIANCE_FOOTER}",
+            encoding="utf-8",
         )
         (lead_dir / "landing.html").write_text(html_doc, encoding="utf-8")
+
+        key_points = "\n".join(f"- {point}" for point in copy.call_key_points)
+        call_script = (
+            f"Ligar para: {lead['name']} — {lead.get('phone') or 'telefone não informado'}\n\n"
+            f"ABERTURA\n{copy.call_opening}\n\n"
+            f"PONTOS-CHAVE\n{key_points}\n\n"
+            f"FECHAMENTO\n{copy.call_closing_ask}\n"
+        )
+        (lead_dir / "call_script.txt").write_text(call_script, encoding="utf-8")
 
         total_cost += (
             usage["input_tokens"] * INPUT_PRICE_PER_TOKEN

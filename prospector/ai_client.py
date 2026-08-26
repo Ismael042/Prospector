@@ -32,6 +32,15 @@ Write, in English:
      ("Quality service") filler
    - cta_label: 2-4 words for a call-to-action button, appropriate to the
      category (e.g. "Book a Table", "Get a Free Quote")
+
+3. A short cold-call script for the same pitch, meant to be read by a person
+   before dialing the business's real phone number:
+   - call_opening: the first sentence to say after introducing yourself,
+     referencing a real detail above (rating or review count) — not generic
+   - call_key_points: exactly 2-3 short phrases (this is a spoken script, not
+     an email — keep each under 12 words) to hit during the call
+   - call_closing_ask: one sentence to close the call, asking for a quick
+     follow-up (a callback, a text, or an email address to send the mockup to)
 """
 
 
@@ -43,6 +52,9 @@ class LeadCopy(BaseModel):
     about_paragraph: str
     highlights: list[str]
     cta_label: str
+    call_opening: str
+    call_key_points: list[str]
+    call_closing_ask: str
 
 
 def generate_pitch(lead: dict, category: str) -> tuple[LeadCopy, dict]:

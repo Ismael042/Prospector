@@ -80,11 +80,15 @@ def fetch_photo(photo_name: str | None, max_width_px: int = 1200) -> tuple[bytes
     if not photo_name:
         return None
 
-    response = requests.get(
-        PHOTO_MEDIA_URL.format(photo_name=photo_name),
-        params={"maxWidthPx": max_width_px, "key": _api_key()},
-        timeout=15,
-    )
+    try:
+        response = requests.get(
+            PHOTO_MEDIA_URL.format(photo_name=photo_name),
+            params={"maxWidthPx": max_width_px, "key": _api_key()},
+            timeout=15,
+        )
+    except requests.RequestException:
+        return None
+
     if response.status_code != 200:
         return None
 
